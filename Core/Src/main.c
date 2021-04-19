@@ -57,6 +57,13 @@
 LED_TypeDef led;
 PWM_TypeDef pwm;
 BUTTON_TypeDef button;
+//Valeur de la photo résistance
+uint16_t prValue = 0;
+
+//Valeur du potentiomètre
+uint16_t potValue = 0;
+
+uint8_t mode = 1;
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
@@ -122,21 +129,27 @@ int main(void)
   //Initialisation du LCD
   lcdinit4(); //call lcdinit4
 
-    Button_init(&button, GPIOC, 13, LL_GPIO_PULL_NO);
-    Button_enableIRQ(&button,LL_EXTI_TRIGGER_RISING);
+  //Initialisation du bouton et de son gestionnaire d'interruptions
+  Button_init(&button, GPIOC, 13, LL_GPIO_PULL_NO);
+  Button_enableIRQ(&button,LL_EXTI_TRIGGER_RISING);
 
 
 //  AlternateFunction(GPIOC, 7, 0); //Vuedansledatasheet*
 //  PWM(TIM22, 2, 16000000, 50, 0.5);
+  //Initialisation de la pin PWM et définition de sa valeur
   PWM_init(&pwm, GPIOC, 7, 0, TIM22, 2);
   PWM_set(&pwm, 16000000, 50, 0.5);
 
+  //Initialisation de la LED
   Led_init(&led, GPIOA, 5);
 
 
   GPIOA->MODER &=~(0b11 << (2*5));
   GPIOA->MODER |=(0b11 << (2*5));
+
+  //Initialisation de la résistance variable
   rv_init(ADC1, 12,5);
+
 
   /* USER CODE END 2 */
   /* Infinite loop */
@@ -147,24 +160,28 @@ int main(void)
 	  if(GPIOC->IDR&(1<<7))Led_turnOn(&led);
 	  else Led_turnOff(&led);
 
+	  //Si le mode est le premier
+	  if (mode == 1){
+		  //ADC lis la valeur de la photo résistance
+		  prValue = rv_getValue();
+	  } else {
+		  //ADC lis la valeur du potentiomètre
+		  potValue = rv_getValue();
+	  }
+
+
 	  //les deux lignes qui seront affichées sur le LCD
-	  uint16_t seuil = 100;
-	  uint16_t valeur = rv_getValue();
-	  float lum = rv_getValue();
+	  float lum = (prValue/potValue)*100;
 	  PWM_set(&pwm, 16000000, 50, lum);
 
-
-
-
 	  char valeurChar[20];
-	  itoa(valeur, valeurChar, 10);
+	  itoa(prValue, valeurChar, 10);
 
 	  //Affichage sur le LCD
 
 	  Affichage_LCD("100", valeurChar); //call Affichage_LCD
 
 	  LL_mDelay(300000);
-
 
 
     /* USER CODE BEGIN 3 */
