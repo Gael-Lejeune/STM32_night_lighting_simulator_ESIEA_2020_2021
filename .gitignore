@@ -1,0 +1,6 @@
+.settings/
+Debug/
+Drivers/
+*.launch
+Startup/
+*.ld
