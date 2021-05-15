@@ -58,12 +58,19 @@ LED_TypeDef led;
 PWM_TypeDef pwm;
 BUTTON_TypeDef button;
 //Valeur de la photo résistance
-uint16_t prValue = 0;
+float prValue = 0.0;
 
 //Valeur du potentiomètre
-uint16_t potValue = 0;
+float potValue = 50.0;
+
+int iprValue;
+int ipotValue;
+
+float lum = 0.5;
 
 uint8_t mode = 1;
+
+uint8_t last_button_state=1;
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
@@ -73,13 +80,23 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-void EXTI2_3_IRQHandler() {
-//		Led_toggle(&led2);
-//		//effacer le flag correspodantà l’interruption en cours
-//		EXTI->PR |= (1 << bouton2.pin);
+void EXTI4_15_IRQHandler() {
+	if(Button_State(&button) == 0){
+		LL_mDelay(20000);
+	} else {
+		if(mode == 1){
+			mode = 0;
+			change_channel(ADC1, 0);
+		} else if(mode == 0){
+			mode = 1;
+			change_channel(ADC1, 5);
+		}
+	}
+	EXTI->PR|= (1 << button.pin);
 }
 
 /* USER CODE END 0 */
+
 
 /**
   * @brief  The application entry point.
@@ -131,24 +148,22 @@ int main(void)
 
   //Initialisation du bouton et de son gestionnaire d'interruptions
   Button_init(&button, GPIOC, 13, LL_GPIO_PULL_NO);
-  Button_enableIRQ(&button,LL_EXTI_TRIGGER_RISING);
+  Button_enableIRQ(&button,LL_EXTI_TRIGGER_RISING_FALLING);
 
 
 //  AlternateFunction(GPIOC, 7, 0); //Vuedansledatasheet*
 //  PWM(TIM22, 2, 16000000, 50, 0.5);
   //Initialisation de la pin PWM et définition de sa valeur
-  PWM_init(&pwm, GPIOC, 7, 0, TIM22, 2);
+  PWM_init(&pwm, GPIOB, 3, 2, TIM2, 2);
   PWM_set(&pwm, 16000000, 50, 0.5);
 
-  //Initialisation de la LED
-  Led_init(&led, GPIOA, 5);
+////  Initialisation de la LED
+//  Led_init(&led, GPIOB, 3);
 
-
-  GPIOA->MODER &=~(0b11 << (2*5));
-  GPIOA->MODER |=(0b11 << (2*5));
 
   //Initialisation de la résistance variable
-  rv_init(ADC1, 12,5);
+  rv_init(GPIOA, 5, ADC1, 12,5);
+
 
 
   /* USER CODE END 2 */
@@ -157,31 +172,86 @@ int main(void)
   while (1) {
     /* USER CODE END WHILE */
 
-	  if(GPIOC->IDR&(1<<7))Led_turnOn(&led);
-	  else Led_turnOff(&led);
+//	  if(GPIOC->IDR&(1<<7))Led_turnOn(&led);
+//	  else Led_turnOff(&led);
 
 	  //Si le mode est le premier
 	  if (mode == 1){
 		  //ADC lis la valeur de la photo résistance
-		  prValue = rv_getValue();
-	  } else {
+		  prValue = ((float)rv_getValue()/(float)4095)*100;
+	  } else if (mode == 0){
 		  //ADC lis la valeur du potentiomètre
-		  potValue = rv_getValue();
+		  potValue = ((float)rv_getValue()/(float)4095)*100;
+
 	  }
+	  iprValue = prValue;
+	  ipotValue = potValue;
+
 
 
 	  //les deux lignes qui seront affichées sur le LCD
-	  float lum = (prValue/potValue)*100;
+	  if (potValue < prValue) {
+		  lum = 0.0;
+	  } else {
+		  lum = (potValue-prValue)/100;
+	  }
+
 	  PWM_set(&pwm, 16000000, 50, lum);
 
-	  char valeurChar[20];
-	  itoa(prValue, valeurChar, 10);
-
+	  char prChar[20];
+	  itoa(iprValue, prChar, 10);
+	  char potChar[20];
+	  itoa(ipotValue, potChar, 10);
+	  if(!potChar[1]){
+		  potChar[1] = potChar[0];
+		  potChar[0] = ' ';
+	  }
+	  if(!prChar[1]){
+		  prChar[1] = prChar[0];
+		  prChar[0] = ' ';
+	  }
 	  //Affichage sur le LCD
+	  char potStr[20];
+	  potStr[0]= 'S';
+	  potStr[1]= 'e';
+	  potStr[2]= 'u';
+	  potStr[3]= 'i';
+	  potStr[4]= 'l';
+	  potStr[5]= ' ';
+	  potStr[6]= ':';
+	  potStr[7]= ' ';
+	  potStr[8]= ' ';
+	  potStr[9]= ' ';
+	  potStr[10]= ' ';
+	  potStr[11]= ' ';
+	  potStr[12] = potChar[0];
+	  potStr[13] = potChar[1];
+	  potStr[14] = ' ';
+	  if (potChar[2]){ potStr[14] = potChar[2];}
+	  potStr[15] = '%';
 
-	  Affichage_LCD("100", valeurChar); //call Affichage_LCD
+	  char prStr[20];
+	  prStr[0] = 'L';
+	  prStr[1] = 'u';
+	  prStr[2] = 'm';
+	  prStr[3] = 'i';
+	  prStr[4] = 'n';
+	  prStr[5] = 'o';
+	  prStr[6] = 's';
+	  prStr[7] = 'i';
+	  prStr[8] = 't';
+	  prStr[9] = 'e';
+	  prStr[10] = ' ';
+	  prStr[11] = ':';
+	  prStr[12] = prChar[0];
+	  prStr[13] = prChar[1];
+	  prStr[14] = ' ';
+	  if (prChar[2]){ prStr[14] = prChar[2];}
+	  prStr[15] = '%';
 
-	  LL_mDelay(300000);
+	  Affichage_LCD(potStr, prStr); //call Affichage_LCD
+
+	  LL_mDelay(150000);
 
 
     /* USER CODE BEGIN 3 */

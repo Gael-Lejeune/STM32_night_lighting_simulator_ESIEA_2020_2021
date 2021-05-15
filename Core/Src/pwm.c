@@ -19,10 +19,10 @@ void PWM_init(PWM_TypeDef *pwm, GPIO_TypeDef * port, uint8_t pin, uint8_t af, TI
 
 	if (pwm->pin <= 7){
 		pwm->gpioPort->AFR[0]&=~(0b0000<<(pwm->pin*4));
-		pwm->gpioPort->AFR[0]&=(pwm->af<<(pwm->pin*4)); /*AFR[0] représenteAFRL et AFR[1] AFRH*/
+		pwm->gpioPort->AFR[0]|=(pwm->af<<(pwm->pin*4)); /*AFR[0] représenteAFRL et AFR[1] AFRH*/
 	} else {
 		pwm->gpioPort->AFR[1]&=~(0b0000<<(pwm->pin*4));
-		pwm->gpioPort->AFR[1]&=(pwm->af<<(pwm->pin*4)); /*AFR[0] représenteAFRL et AFR[1] AFRH*/
+		pwm->gpioPort->AFR[1]|=(pwm->af<<(pwm->pin*4)); /*AFR[0] représenteAFRL et AFR[1] AFRH*/
 	}
 
 

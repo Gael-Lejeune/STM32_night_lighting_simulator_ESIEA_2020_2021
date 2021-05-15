@@ -2,9 +2,12 @@
 #include "stm32l0xx_ll_exti.h"
 
 
-void rv_init(ADC_TypeDef* adc, uint8_t resolution, uint8_t channel){
+void rv_init(GPIO_TypeDef * port, uint8_t pn, ADC_TypeDef* adc, uint8_t resolution, uint8_t channel){
 	RCC->APB2ENR|= RCC_APB2ENR_ADCEN;//Activation del’horloge
 	adc->CFGR2|=(0b11<<ADC_CFGR2_CKMODE_Pos);//Mode synchronous clock
+
+	  port->MODER &=~(0b11 << (2*pn));
+	  port->MODER |=(0b11 << (2*pn));
 
 	if((adc->CR& ADC_CR_ADEN) != 0) {
 		adc->CR&= ~(uint32_t)ADC_CR_ADEN;
@@ -26,6 +29,14 @@ void rv_init(ADC_TypeDef* adc, uint8_t resolution, uint8_t channel){
 	} else if(resolution==6) {
 		adc->CFGR1|=(0b11<<3);
 	}
+	adc->CHSELR|=(1<<channel);//Selection du canal
+	adc->CR|=ADC_CR_ADEN;//Activation duconvertisseur
+	adc->CR|=ADC_CR_ADSTART;//Activation du dialogue
+}
+
+void change_channel(ADC_TypeDef* adc, uint8_t channel){
+	adc->CR&=~ADC_CR_ADEN;//Désativation du convertisseur
+	adc->CHSELR=(0);
 	adc->CHSELR|=(1<<channel);//Selection du canal
 	adc->CR|=ADC_CR_ADEN;//Activation duconvertisseur
 	adc->CR|=ADC_CR_ADSTART;//Activation du dialogue
