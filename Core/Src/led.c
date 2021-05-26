@@ -1,5 +1,7 @@
 #include "led.h"
 
+//Ce fichier ne nous sert pas dans le programme mais il est un exemple de fonctionnement d'une led
+
 void Led_init(LED_TypeDef *led, GPIO_TypeDef * port, uint8_t pn){
 	led->gpioPort=port;
 	led->pin=pn;

@@ -1,6 +1,6 @@
 #include "pwm.h"
 
-
+//Initialisation de la PWM
 void PWM_init(PWM_TypeDef *pwm, GPIO_TypeDef * port, uint8_t pin, uint8_t af, TIM_TypeDef* timer, uint8_t canal){
 	pwm->gpioPort=port;
 	pwm->pin=pin;
@@ -26,6 +26,7 @@ void PWM_init(PWM_TypeDef *pwm, GPIO_TypeDef * port, uint8_t pin, uint8_t af, TI
 	}
 
 
+	//Activation du timer spécifié
 	if(pwm->timer==TIM22) {
 		RCC->APB2ENR|= RCC_APB2ENR_TIM22EN;
 	} else if (pwm->timer==TIM21) {
@@ -36,6 +37,7 @@ void PWM_init(PWM_TypeDef *pwm, GPIO_TypeDef * port, uint8_t pin, uint8_t af, TI
 		RCC->APB1ENR|= RCC_APB1ENR_TIM2EN;
 	}
 
+	//Activation du bon canal
 	if (pwm->canal == 1) {
 		pwm->timer->CCMR1|= TIM_CCMR1_OC1M_1| TIM_CCMR1_OC1M_2;
 		pwm->timer->CCMR1&= ~TIM_CCMR1_OC1M_0;
@@ -48,8 +50,8 @@ void PWM_init(PWM_TypeDef *pwm, GPIO_TypeDef * port, uint8_t pin, uint8_t af, TI
 
 }
 
-
-void PWM_set(PWM_TypeDef * pwm, uint32_t HCLKFrequency, uint32_t PWMFrequency, float duty_cycle){
+//Definition des valeurs de fréquence de la PWM
+void PWM_set(PWM_TypeDef * pwm, uint32_t HCLKFrequency, uint32_t PWMFrequency, float duty_cycle) {
 	int arr = HCLKFrequency/PWMFrequency-1;
 	if (arr >= 65535){
 		pwm->timer->PSC=999;
@@ -64,7 +66,6 @@ void PWM_set(PWM_TypeDef * pwm, uint32_t HCLKFrequency, uint32_t PWMFrequency, f
 
 
 	pwm->timer->ARR= arr;
-
 	pwm->timer->CR1|= 1;
 }
 

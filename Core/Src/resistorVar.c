@@ -1,7 +1,7 @@
 #include "resistorVar.h"
 #include "stm32l0xx_ll_exti.h"
 
-
+//Initialisation de la résistance variable
 void rv_init(GPIO_TypeDef * port, uint8_t pn, ADC_TypeDef* adc, uint8_t resolution, uint8_t channel){
 	RCC->APB2ENR|= RCC_APB2ENR_ADCEN;//Activation del’horloge
 	adc->CFGR2|=(0b11<<ADC_CFGR2_CKMODE_Pos);//Mode synchronous clock
@@ -34,6 +34,7 @@ void rv_init(GPIO_TypeDef * port, uint8_t pn, ADC_TypeDef* adc, uint8_t resoluti
 	adc->CR|=ADC_CR_ADSTART;//Activation du dialogue
 }
 
+//Cette fonction nous permet de changer le canal d'écoute du CAN
 void change_channel(ADC_TypeDef* adc, uint8_t channel){
 	adc->CR&=~ADC_CR_ADEN;//Désativation du convertisseur
 	adc->CHSELR=(0);
@@ -42,6 +43,7 @@ void change_channel(ADC_TypeDef* adc, uint8_t channel){
 	adc->CR|=ADC_CR_ADSTART;//Activation du dialogue
 }
 
+//Renvoie la valeur observée par le CAN
 uint16_t rv_getValue(){
 	  while((ADC1->ISR& ADC_ISR_EOC)==0);
 	  return ADC1->DR;

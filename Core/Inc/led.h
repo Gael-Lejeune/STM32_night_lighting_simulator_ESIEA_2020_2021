@@ -1,10 +1,8 @@
 #include "stm32l053xx.h"
 
-typedef struct
-{
+typedef struct {
 	GPIO_TypeDef * gpioPort;
 	uint8_t pin;
-
 } LED_TypeDef;
 
 //Initialisation de la LED

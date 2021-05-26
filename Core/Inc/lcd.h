@@ -1,5 +1,10 @@
-#include "stm32l0xx.h"
+ /******************************************************************************
+  * @file           : main.h
+  * @brief          : Header for main.c file.
+  *                   This file contains the common defines of the application.
+  ******************************************************************************/
 
+#include "stm32l0xx.h"
 
 //le port pour les caractères sera la port GPIOA
 #define PORT_CHAR GPIOA

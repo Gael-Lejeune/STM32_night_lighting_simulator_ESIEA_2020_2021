@@ -1,7 +1,7 @@
 #include "button.h"
 #include "stm32l0xx_ll_exti.h"
 
-
+//Initialisation du bouton
 void Button_init(BUTTON_TypeDef *button, GPIO_TypeDef * port, uint8_t pn,
 		uint8_t pl) {
 
@@ -10,10 +10,10 @@ void Button_init(BUTTON_TypeDef *button, GPIO_TypeDef * port, uint8_t pn,
 	button->pull = pl;
 
 	//Activation de l'horloge sur le port en question
-	//1-déterminer le numéro du port 0--> GPIOA, 1-->GPIOB, etc.
+	//déterminer le numéro du port 0--> GPIOA, 1-->GPIOB, etc.
 	uint8_t nb_port;
 	nb_port = ((uint32_t) port - IOPPERIPH_BASE) / 0x400;
-	//2-activation de l'hologe
+	//activation de l'hologe
 	RCC->IOPENR |= 1 << nb_port;
 
 	//configuration de la pin en entrée
@@ -24,14 +24,16 @@ void Button_init(BUTTON_TypeDef *button, GPIO_TypeDef * port, uint8_t pn,
 	button->gpioPort->PUPDR |= (pl << 2 * pn);
 }
 
+//Renvoie l'état du bouton spécifié
 uint8_t Button_State(BUTTON_TypeDef *button) {
 	if(button->gpioPort->IDR &(1<<button->pin))
 		return 1;
 	else return 0;
 }
 
-void Button_enableIRQ(BUTTON_TypeDef *button, uint8_t trigger) {
 
+//Active le fonctionnement par interruption du bouton
+void Button_enableIRQ(BUTTON_TypeDef *button, uint8_t trigger) {
 	//activation de l'interruption externe
 	RCC->APB2ENR |= RCC_APB2ENR_SYSCFGEN;
 
@@ -41,7 +43,7 @@ void Button_enableIRQ(BUTTON_TypeDef *button, uint8_t trigger) {
 	//2-déterminer le numéro du port 0--> GPIOA, 1-->GPIOB, etc.
 	uint8_t nb_port;
 	nb_port = ((uint32_t) button->gpioPort - IOPPERIPH_BASE) / 0x400;
-	//3-configuration du registre EXTI de SYSCFG
+	//configuration du registre EXTI de SYSCFG
 	SYSCFG->EXTICR[nb_EXTI] &= ~(0b1111 << 4 * (button->pin % 4));
 	SYSCFG->EXTICR[nb_EXTI] |= (nb_port << 4 * (button->pin % 4));
 

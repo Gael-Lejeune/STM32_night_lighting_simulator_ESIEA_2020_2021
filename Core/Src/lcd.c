@@ -1,26 +1,27 @@
 #include "lcd.h"
 
+//Ecrit un caractère sur l'écran
 void Ecrire(char f){
+	//mettre les sorties à 0
+	PORT_CHAR->ODR&=~(1<<DB4);
+	PORT_CHAR->ODR&=~(1<<DB5);
+	PORT_CHAR->ODR&=~(1<<DB6);
+	PORT_CHAR->ODR&=~(1<<DB7);
 
-//mettre les sorties à 0
-PORT_CHAR->ODR&=~(1<<DB4);
-PORT_CHAR->ODR&=~(1<<DB5);
-PORT_CHAR->ODR&=~(1<<DB6);
-PORT_CHAR->ODR&=~(1<<DB7);
+	//si le bit 7 de f est à 1 mettre le bit DB7 à 1
+	if((f & 0b10000000)!=0) PORT_CHAR->ODR|=(1<<DB7);
 
-//si le bit 7 de f est à 1 mettre le bit DB7 à 1
-if((f & 0b10000000)!=0) PORT_CHAR->ODR|=(1<<DB7);
+	//si le bit 6 de f est à 1 mettre le bit DB6 à 1
+	if((f & 0b01000000)!=0) PORT_CHAR->ODR|=(1<<DB6);
 
-//si le bit 6 de f est à 1 mettre le bit DB6 à 1
-if((f & 0b01000000)!=0) PORT_CHAR->ODR|=(1<<DB6);
+	//si le bit 5 de f est à 1 mettre le bit DB5 à 1
+	if((f & 0b00100000)!=0) PORT_CHAR->ODR|=(1<<DB5);
 
-//si le bit 5 de f est à 1 mettre le bit DB5 à 1
-if((f & 0b00100000)!=0) PORT_CHAR->ODR|=(1<<DB5);
-
-//si le bit 7 de f est à 1 mettre le bit DB4 à 1
-if((f & 0b00010000)!=0) PORT_CHAR->ODR|=(1<<DB4);
+	//si le bit 7 de f est à 1 mettre le bit DB4 à 1
+	if((f & 0b00010000)!=0) PORT_CHAR->ODR|=(1<<DB4);
 }
 
+//Actualiser l'écran
 void toggle_e(){
 	//mettre la pin E du LCD à 1
 	Port_E->ODR|=(1<<E);
@@ -32,14 +33,13 @@ void toggle_e(){
 	Port_E->ODR&=~(1<<E);	//mettre E à 0
 }
 
+//Ecrire un char puis actualiser l'écran
 void D_set_E_Toggle (char f){
-
-Ecrire(f);
-
-toggle_e();
-
+	Ecrire(f);
+	toggle_e();
 }
 
+//Ecrire sur la sortie du LCD
 void EcrireFonction(char f){
 	char nibble_pfort;
 	char nibble_pfaible;
@@ -59,9 +59,9 @@ void EcrireFonction(char f){
 
 	//attendre un peu
 	LL_mDelay(50);//delay=50us
-
 }
 
+//Ecrire un carractère sur le LCD
 void EcrireCaractere(char c){
 	//mettre la pin RS du LCD à 1
 	 Port_RS->ODR|=(1<<rs);
@@ -81,12 +81,15 @@ void EcrireCaractere(char c){
 	  LL_mDelay(50); //delay=50us
 }
 
+//Ecrire une chaine de caractères sur le LCD
 void EcrireChaine(char ch[]){
-int  i=0;
-while(ch[i]!='\0') {EcrireCaractere (ch[i]); i++;}
-
+	int  i=0;
+	while(ch[i]!='\0') {
+		EcrireCaractere (ch[i]); i++;
+	}
 }
 
+//Initialisation du LCD
 void lcdinit4(){
 
 	  LL_mDelay(1000000);//delay=1000ms
@@ -128,27 +131,25 @@ void lcdinit4(){
 
 
 
-//SET FUNCTION: choix du mode de fonctionnement
-EcrireFonction(0x28);
+     //SET FUNCTION: choix du mode de fonctionnement
+     EcrireFonction(0x28);
 
-//DISPLAY OFF
-EcrireFonction(0x8);
+     //DISPLAY OFF
+     EcrireFonction(0x8);
 
-//DISPLAY CLEAR
-EcrireFonction(1);
-LL_mDelay(1600);//delay=1.6ms
-
-
-//ENTRY MODE SET
-EcrireFonction(0x6);
-
-//DISPLAY ON
-
-EcrireFonction(0xC);
+     //DISPLAY CLEAR
+     EcrireFonction(1);
+     LL_mDelay(1600);//delay=1.6ms
 
 
+     //ENTRY MODE SET
+     EcrireFonction(0x6);
+
+     //DISPLAY ON
+     EcrireFonction(0xC);
 }
 
+//Afficher sur le LCD
 void Affichage_LCD(char * ligne1, char *ligne2){
 	/*effacer l'affichage*/
 	// LCD <- 01, display clear
